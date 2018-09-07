@@ -1,0 +1,106 @@
+html {
+  height: 100%;
+}
+body {
+  font-family: Helvetica;
+  color: #000;
+  margin: 8px;
+  height: 98%;
+}
+
+.nav {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  padding: 4px;
+  background-color: #FFF;
+}
+
+.search {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 4px;
+  background-color: #FFF;
+}
+
+input[type="text"] {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 8px;
+  margin: 0;
+  font-size: 12pt;
+}
+input[disabled] {
+  background: #fafafa;
+  cursor: not-allowed;
+}
+#results-box {
+  max-height: 300px;
+  overflow-y: scroll;
+  padding: 8px 0;
+  margin-top: 2px;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+.result {
+  padding: 4px 24px;
+  font-size: 11pt;
+  cursor: pointer;
+}
+.result:hover {
+  background-color: #fafafa;
+}
+.result.active {
+  background-color: #007bff;
+  color: white;
+}
+
+#tree-box {
+  width: 100%;
+  height: 100%;
+}
+
+.node-hidden {
+  display: none;
+}
+
+.node circle {
+  fill: #999;
+}
+
+.node text {
+  font: 12px sans-serif;
+}
+
+.node rect {
+  fill: #FFF;
+  stroke-width: 1px;
+  stroke: #000;
+}
+
+.node .listener {
+  fill: none;
+  stroke: none;
+}
+
+.node rect.active {
+  stroke: #007bff;
+  stroke-width: 3px;
+}
+
+.link {
+  fill: none;
+  stroke: #000;
+  stroke-width: 1px;
+  image-rendering: crisp-edges;
+}
+
+#nav-box .link {
+  stroke: #999;
+}
+.brush {
+  fill: #888;
+  opacity: 0.4;
+  stroke: none;
+}
