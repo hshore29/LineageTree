@@ -120,7 +120,7 @@ function LineageTree(data) {
       .selectAll(".node").data(_.nodeList).enter()
       .append("g")
           .attr("id", d => "b-" + d.data.id)
-          .attr("class", d => "node" + (d.data.active ? " undergrad" : ""))
+          .attr("class", d => "node" + (d.data.active ? " node-undergrad" : ""))
           .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
   // Add node content
   _.node.append("rect")
@@ -157,7 +157,7 @@ function LineageTree(data) {
   _.nav.append("g").attr("class", "links")
       .selectAll(".link").data(_.linkList).enter()
           .append("path")
-              .attr("class", d => "link t-" + d.target.data.id)
+              .attr("class", d => "link link-nav t-" + d.target.data.id)
               .attr("d", _.linkPathGen(_.navScaleX, _.navScaleY));
   // Add dots for undergrad nodes
   _.actives = _.nodeList.filter(n => n.data.active);
@@ -324,28 +324,28 @@ LineageTree.prototype.linkPathGen = function (x, y) {
 
 LineageTree.prototype.activateNode = function(node, i, fromSearch) {
   // Reset Node & Link Classes
-  $(".node.active").removeClass("active");
-  $(".node.ancestor").removeClass("ancestor");
-  $(".node.descendant").removeClass("descendant");
-  $(".link.ancestor").removeClass("ancestor");
-  $(".link.descendant").removeClass("descendant");
-  $(".dot.descendant").removeClass("descendant");
+  $(".node-active").removeClass("node-active");
+  $(".node-ancestor").removeClass("node-ancestor");
+  $(".node-descendant").removeClass("node-descendant");
+  $(".link-ancestor").removeClass("link-ancestor");
+  $(".link-descendant").removeClass("link-descendant");
+  $(".dot-descendant").removeClass("dot-descendant");
 
   // Add Node & Link Classes
-  $("#b-" + node.data.id).addClass("active");
-  $(".t-" + node.data.id).addClass("ancestor");
+  $("#b-" + node.data.id).addClass("node-active");
+  $(".t-" + node.data.id).addClass("link-ancestor");
   node.ancestors().slice(1).forEach(a => {
-    $("#b-" + a.data.id).addClass("ancestor");
-    $(".t-" + a.data.id).addClass("ancestor").each(function() {
+    $("#b-" + a.data.id).addClass("node-ancestor");
+    $(".t-" + a.data.id).addClass("link-ancestor").each(function() {
       $(this).parent().append(this);
     });
   });
   node.descendants().slice(1).forEach(d => {
-    $("#b-" + d.data.id).addClass("descendant");
-    $(".t-" + d.data.id).addClass("descendant").each(function() {
+    $("#b-" + d.data.id).addClass("node-descendant");
+    $(".t-" + d.data.id).addClass("link-descendant").each(function() {
       $(this).parent().append(this);
     });
-    $(".a-" + d.data.id).addClass("descendant");
+    $(".a-" + d.data.id).addClass("dot-descendant");
   });
 
   // Populate Infobox - basic details
@@ -398,12 +398,12 @@ LineageTree.prototype.initSearch = function() {
   $("#search-box").on("keyup", () => _.search(_));
   $("#search-box").on("focus", () => _.search(_));
   $("#search-box").parent().on("focusout", function(e) {
-    if (e.relatedTarget != this) $("#results-box").hide();
+    if (e.relatedTarget != this) $(".results-box").hide();
   });
 
-  $("#results-box").on("click", ".result", function() {
-    $(".result.active").removeClass("active");
-    $(this).addClass("active");
+  $(".results-box").on("click", ".result", function() {
+    $(".result-selected").removeClass("result-selected");
+    $(this).addClass("result-selected");
     let name = $(this).data("id");
     let node = _.nodeList.filter(n => n.id == name);
     if (node.length == 1) {
@@ -420,22 +420,22 @@ LineageTree.prototype.search = function(context) {
   let _ = context;
   let q = $("#search-box").val().toLowerCase();
   if (q.length < 3) {
-    $("#results-box").hide();
+    $(".results-box").hide();
     return;
   }
   let results = _.nodeList.filter(n => n.data.dummy !== true)
       .filter(n => n.id.toLowerCase().includes(q))
       .sort((a, b) => a.data.year - b.data.year);
   if (results.length < 1) {
-    $("#results-box").hide();
+    $(".results-box").hide();
     return;
   }
   d3.selectAll(".result").remove();
-  d3.select("#results-box")
+  d3.select(".results-box")
       .selectAll(".result").data(results).enter()
       .append("div")
           .attr("class", "result")
           .attr("data-id", r => r.id)
           .text(r => r.id + " '" + r.data.year.toString().substr(2));
-  $("#results-box").show();
+  $(".results-box").show();
 }

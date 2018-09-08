@@ -1,19 +1,29 @@
-/* Princeton Orange: #e77500 */
-/* Middlebury Blue: #1158a0 rgb(17,88,160) hsl(210, 81%, 35%)*/
+/* Color details
+  Princeton Orange: #e77500 (from princeton.edu)
+  Middlebury Blue: #1158a0 (from middlebury.edu)
+                   rgb(17,88,160) -> hsl(210, 81%, 35%)
+  Middlebury Blue @ 45%: #1673d0
+  Middlebury Blue @ 97%: #f1f7fe
+*/
+
+/* Global styles */
 html {
   height: 100%;
 }
 body {
-  font-family: Helvetica;
   color: #000;
-  margin: 8px;
+  font-family: Helvetica;
   height: 98%;
+  margin: 8px;
 }
 
+/* Containers & Positioning */
 .container {
-  position: absolute;
-  padding: 4px;
   background-color: #FFF;
+  padding: 4px;
+  position: absolute;
+}
+.container:focus {
   outline: none;
 }
 
@@ -21,50 +31,55 @@ body {
   bottom: 15px;
   right: 15px;
 }
-
 .search {
-  top: 15px;
   right: 15px;
-}
-
-.info {
   top: 15px;
+}
+.info {
+  background-color: #fafafa;
   left: 15px;
+  top: 15px;
   width: 250px;
 }
+#tree-box {
+  height: 100%;
+  width: 100%;
+}
 
+/* Search Box styles */
 input[type="text"] {
   border: 1px solid #aaa;
   border-radius: 4px;
-  padding: 8px;
-  margin: 0;
   font-size: 12pt;
+  margin: 0;
+  padding: 8px;
 }
 input[disabled] {
   background: #fafafa;
   cursor: not-allowed;
 }
-#results-box {
+.results-box {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  margin-top: 2px;
   max-height: 300px;
   overflow-y: scroll;
   padding: 8px 0;
-  margin-top: 2px;
-  border: 1px solid #aaa;
-  border-radius: 4px;
 }
 .result {
-  padding: 4px 24px;
-  font-size: 11pt;
   cursor: pointer;
+  font-size: 11pt;
+  padding: 4px 24px;
 }
 .result:hover {
   background-color: #fafafa;
 }
-.result.active {
-  background-color: hsl(210, 81%, 45%);
+.result-selected, .result-selected:hover {
+  background-color: #1673d0;
   color: white;
 }
 
+/* Info Box styles */
 table {
   width: 100%;
 }
@@ -77,17 +92,17 @@ tbody th {
   width: 100px;
 }
 tbody ul {
-  margin: 0;
-  padding: 0;
   list-style: none;
+  margin: 0;
   max-height: 100px;
   overflow-y: scroll;
+  padding: 0;
 }
 tbody li {
   padding-bottom: 1px;
 }
 .subhead {
-  background-color: #fafafa;
+  background-color: #dadada;
   text-align: center;
 }
 .subhead th {
@@ -101,61 +116,53 @@ tbody li {
   cursor: pointer;
 }
 
-#tree-box {
-  width: 100%;
-  height: 100%;
-}
-
+/* SVG Styles - Main Tree & Nav Box */
 .node circle {
   fill: #999;
 }
-
 .node text {
   font: 12px sans-serif;
 }
-
 .node rect {
   fill: #FFF;
-  stroke-width: 1px;
   stroke: #000;
+  stroke-width: 1px;
 }
-
-.node.active rect {
-  stroke: hsl(210, 81%, 45%);
+.node-active rect {
+  stroke: #1673d0;
   stroke-width: 3px;
 }
-.node.ancestor rect {
-  stroke: hsl(210, 81%, 45%);
+.node-ancestor rect {
+  stroke: #1673d0;
 }
-.node.descendant rect {
+.node-descendant rect {
   stroke: #e77500;
 }
-
-.node.undergrad rect {
-  fill: hsl(210, 81%, 97%);
+.node-undergrad rect {
+  fill: #f1f7fe;
 }
 
 .link {
   fill: none;
+  image-rendering: crisp-edges;
   stroke: #000;
   stroke-width: 1px;
-  image-rendering: crisp-edges;
 }
-.link.ancestor {
-  stroke: hsl(210, 81%, 45%) !important;
-}
-.link.descendant {
-  stroke: #e77500 !important;
-}
-
-#nav-box .link {
+.link-nav {
   stroke: #999;
 }
-#nav-box .dot {
-  fill: hsl(210, 81%, 45%);
+.link-ancestor {
+  stroke: #1673d0;
+}
+.link-descendant {
+  stroke: #e77500;
+}
+
+.dot {
+  fill: #1673d0;
   stroke: none;
 }
-#nav-box .dot.descendant {
+.dot-descendant {
   fill: #e77500;
 }
 .brush {
