@@ -1,3 +1,5 @@
+/* Princeton Orange: #e77500 */
+/* Middlebury Blue: #1158a0 rgb(17,88,160) hsl(210, 81%, 35%)*/
 html {
   height: 100%;
 }
@@ -53,17 +55,13 @@ input[disabled] {
   background-color: #fafafa;
 }
 .result.active {
-  background-color: #007bff;
+  background-color: hsl(210, 81%, 45%);
   color: white;
 }
 
 #tree-box {
   width: 100%;
   height: 100%;
-}
-
-.node-hidden {
-  display: none;
 }
 
 .node circle {
@@ -80,20 +78,19 @@ input[disabled] {
   stroke: #000;
 }
 
-.node .listener {
-  fill: none;
-  stroke: none;
-}
-
-.node rect.active {
-  stroke: #007bff;
+.node.active rect {
+  stroke: hsl(210, 81%, 45%);
   stroke-width: 3px;
 }
-.node rect.ancestor {
-  stroke: #007bff;
+.node.ancestor rect {
+  stroke: hsl(210, 81%, 45%);
 }
-.node rect.descendant {
-  stroke: orange;
+.node.descendant rect {
+  stroke: #e77500;
+}
+
+.node.undergrad rect {
+  fill: hsl(210, 81%, 97%);
 }
 
 .link {
@@ -103,14 +100,21 @@ input[disabled] {
   image-rendering: crisp-edges;
 }
 .link.ancestor {
-  stroke: #007bff !important;
+  stroke: hsl(210, 81%, 45%) !important;
 }
 .link.descendant {
-  stroke: orange !important;
+  stroke: #e77500 !important;
 }
 
 #nav-box .link {
   stroke: #999;
+}
+#nav-box .dot {
+  fill: hsl(210, 81%, 45%);
+  stroke: none;
+}
+#nav-box .dot.descendant {
+  fill: #e77500;
 }
 .brush {
   fill: #888;

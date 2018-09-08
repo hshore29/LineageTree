@@ -28,7 +28,7 @@ function drawGraph(data) {
   cleandata.forEach(function(row) {
     row.year = +row.year;
   });
-  
+
   // Create 
   tree = new LineageTree(cleandata);
 }
@@ -36,12 +36,12 @@ function drawGraph(data) {
 /*** Lineage Tree Drawing Class ***/
 function LineageTree(data) {
   let _ = this;
-  _.box = {width: 120, height: 56, margin: 20};
+  _.box = {width: 130, height: 56, margin: 20};
   _.navHeight = 150;
   _.svg = d3.select("#tree-box");
   _.view = _.svg.append("g").attr("class", "view-box");
   _.nav = d3.select("#nav-box");
-  
+
   // Tree function
   _.tree = d3.tree().nodeSize([
     _.box.width + _.box.margin,
@@ -55,7 +55,7 @@ function LineageTree(data) {
     if (b.children) sep += (b.children.length - 1) / 2;
     return sep;
   });
-  
+
   // Stratify Data
   for (let i=0; i < data.length; i++) {
     if (data.filter(d => d.name == data[i].parent).length == 0) {
@@ -91,9 +91,9 @@ function LineageTree(data) {
 
   // Calculate node positions
   _.tree(_.root);
-  
+
   // Remove dummy nodes
-  _.nodeList = _.nodeList.filter(n => n.id === "N/A" || !n.data.dummy);
+  _.nodeList = _.nodeList.filter(n => !n.data.dummy);
   for (let i=1; i < _.nodeList.length; i++) {
     let n = _.nodeList[i];
     n.parent = n.realParent;
@@ -106,7 +106,7 @@ function LineageTree(data) {
   _.xMax = d3.max(leaves, d => d.x) + (_.box.width + _.box.margin) / 2;
   _.yMin = 0 - _.box.margin / 2;
   _.yMax = d3.max(leaves, d => d.y) + _.box.height + _.box.margin / 2;
-  
+
   // Draw lineage tree
   // Draw links
   _.link = _.view.append("g").attr("class", "link-layer")
@@ -120,7 +120,7 @@ function LineageTree(data) {
       .selectAll(".node").data(_.nodeList).enter()
       .append("g")
           .attr("id", d => "b-" + d.data.id)
-          .attr("class", d => d.data.dummy ? "node-hidden" : "node")
+          .attr("class", d => "node" + (d.data.active ? " undergrad" : ""))
           .attr("transform", d => "translate(" + d.x + "," + d.y + ")");
   // Add node content
   _.node.append("rect")
@@ -144,14 +144,14 @@ function LineageTree(data) {
       .style("text-anchor", "middle")
       .text(d => d.data.pledge_label)
       .on("click", _.activateNode);
-  
+
   // Define nav box scales
   _.navWidth = _.navHeight * (_.xMax - _.xMin) / (_.yMax - _.yMin);
   _.navScaleY = d3.scaleLinear().domain([_.yMin, _.yMax])
       .range([0, _.navHeight]);
   _.navScaleX = d3.scaleLinear().domain([_.xMin, _.xMax])
       .range([0, _.navWidth]);
-  
+
   // Set nav box size, draw links & initialize brush
   _.nav.attr("height", _.navHeight).attr("width", _.navWidth);
   _.nav.append("g").attr("class", "links")
@@ -159,6 +159,15 @@ function LineageTree(data) {
           .append("path")
               .attr("class", d => "link t-" + d.target.data.id)
               .attr("d", _.linkPathGen(_.navScaleX, _.navScaleY));
+  // Add dots for undergrad nodes
+  _.nav.append("g").attr("class", "undergrads")
+      .selectAll(".dot")
+      .data(_.nodeList.filter(n => n.data.active)).enter()
+      .append("circle")
+          .attr("class", d => "dot a-" + d.data.id)
+          .attr("cx", d => _.navScaleX(d.x))
+          .attr("cy", d => _.navScaleY(d.y))
+          .attr("r", 1.5);
   _.brush = _.nav.append("rect").attr("class", "brush");
   _.updateBrush({x: 0, y: 0, k: 1});
 
@@ -197,7 +206,7 @@ function LineageTree(data) {
     b.attr("x", x).attr("y", y);
   }
   _.brush.call(_.drag);
-  
+
   // Initialize search box
   _.initSearch();
 
@@ -304,39 +313,41 @@ LineageTree.prototype.linkPathGen = function (x, y) {
 }
 
 LineageTree.prototype.activateNode = function(node, i, fromSearch) {
-  $(".node rect.active").removeClass("active");
-  $(".node rect.ancestor").removeClass("ancestor");
-  $(".node rect.descendant").removeClass("descendant");
+  $(".node.active").removeClass("active");
+  $(".node.ancestor").removeClass("ancestor");
+  $(".node.descendant").removeClass("descendant");
   $(".link.ancestor").removeClass("ancestor");
   $(".link.descendant").removeClass("descendant");
+  $(".dot.descendant").removeClass("descendant");
 
-  $("#b-" + node.data.id + " rect").addClass("active");
+  $("#b-" + node.data.id).addClass("active");
   $(".t-" + node.data.id).addClass("ancestor");
   node.ancestors().slice(1).forEach(a => {
-    $("#b-" + a.data.id + " rect").addClass("ancestor");
+    $("#b-" + a.data.id).addClass("ancestor");
     $(".t-" + a.data.id).addClass("ancestor").each(function() {
       $(this).parent().append(this);
     });
   });
   node.descendants().slice(1).forEach(d => {
-    $("#b-" + d.data.id + " rect").addClass("descendant");
+    $("#b-" + d.data.id).addClass("descendant");
     $(".t-" + d.data.id).addClass("descendant").each(function() {
       $(this).parent().append(this);
     });
+    $(".a-" + d.data.id).addClass("descendant");
   });
 }
 
 /*** LineageTree Search Box Initialization ***/
 LineageTree.prototype.initSearch = function() {
   var _ = this;
-  
+
   // Add Event Listeners
   $("#search-box").on("keyup", () => _.search(_));
   $("#search-box").on("focus", () => _.search(_));
   $("#search-box").parent().on("focusout", function(e) {
     if (e.relatedTarget != this) $("#results-box").hide();
   });
-  
+
   $("#results-box").on("click", ".result", function() {
     $(".result.active").removeClass("active");
     $(this).addClass("active");
@@ -347,7 +358,7 @@ LineageTree.prototype.initSearch = function() {
       _.activateNode(node[0]);
     }
   });
-    
+
   // Enable search
   $("#search-box").prop("disabled", false);
 }
@@ -368,9 +379,8 @@ LineageTree.prototype.search = function(context) {
   }
   d3.selectAll(".result").remove();
   d3.select("#results-box")
-      .selectAll(".result")
-      .data(results).enter()
-          .append("div")
+      .selectAll(".result").data(results).enter()
+      .append("div")
           .attr("class", "result")
           .attr("data-id", r => r.id)
           .text(r => r.id + " '" + r.data.year.toString().substr(2));
