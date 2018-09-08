@@ -10,21 +10,27 @@ body {
   height: 98%;
 }
 
-.nav {
+.container {
   position: absolute;
-  bottom: 15px;
-  right: 15px;
-  padding: 4px;
-  background-color: #FFF;
-}
-
-.search {
-  position: absolute;
-  top: 15px;
-  right: 15px;
   padding: 4px;
   background-color: #FFF;
   outline: none;
+}
+
+.nav {
+  bottom: 15px;
+  right: 15px;
+}
+
+.search {
+  top: 15px;
+  right: 15px;
+}
+
+.info {
+  top: 15px;
+  left: 15px;
+  width: 250px;
 }
 
 input[type="text"] {
@@ -57,6 +63,33 @@ input[disabled] {
 .result.active {
   background-color: hsl(210, 81%, 45%);
   color: white;
+}
+
+table {
+  width: 100%;
+}
+tbody {
+  font-size: 12px;
+  text-align: left;
+  vertical-align: top;
+}
+tbody th {
+  width: 100px;
+}
+tbody ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+tbody li {
+  padding-bottom: 1px;
+}
+.td-nolittles {
+  font-style: italic;
+  font-weight: lighter;
+}
+.info-link {
+  cursor: pointer;
 }
 
 #tree-box {

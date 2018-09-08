@@ -217,6 +217,15 @@ function LineageTree(data) {
       .attr("width", (_.navScaleX(svg.width()) - _.navScaleX(0)) / _.k)
       .attr("height", (_.navScaleY(svg.height()) - _.navScaleY(0)) / _.k);
   });
+
+  // Add Infobox link listener
+  $(".info").on("click", ".info-link", function() {
+    let node = _.nodeList.filter(n => n.data.id == $(this).data("id"));
+    if (node.length == 1) {
+      _.svg.transition().call(_.zoom.translateTo, node[0].x, node[0].y);
+      _.activateNode(node[0]);
+    }
+  });
 }
 
 /*** LineageTree Tree Manipulation Functions ***/
@@ -313,6 +322,7 @@ LineageTree.prototype.linkPathGen = function (x, y) {
 }
 
 LineageTree.prototype.activateNode = function(node, i, fromSearch) {
+  // Reset Node & Link Classes
   $(".node.active").removeClass("active");
   $(".node.ancestor").removeClass("ancestor");
   $(".node.descendant").removeClass("descendant");
@@ -320,6 +330,7 @@ LineageTree.prototype.activateNode = function(node, i, fromSearch) {
   $(".link.descendant").removeClass("descendant");
   $(".dot.descendant").removeClass("descendant");
 
+  // Add Node & Link Classes
   $("#b-" + node.data.id).addClass("active");
   $(".t-" + node.data.id).addClass("ancestor");
   node.ancestors().slice(1).forEach(a => {
@@ -335,6 +346,31 @@ LineageTree.prototype.activateNode = function(node, i, fromSearch) {
     });
     $(".a-" + d.data.id).addClass("descendant");
   });
+
+  // Populate Infobox - basic details
+  $(".td-name").text(node.data.name);
+  $(".td-year").text(node.data.year_label);
+  $(".td-big").text(node.parent.data.name).data("id", node.parent.data.id);
+  if (node.data.pledge_label) {
+    $(".td-pledge").text(node.data.pledge_label);
+    $(".td-pledge").parent().show();
+  } else {
+    $(".td-pledge").parent().hide();
+  }
+  if (node.children) {
+    let ul = $(".td-littles ul").empty();
+    node.children.forEach(c => {
+      $("<li/>").text(c.data.name).data("id", c.data.id)
+          .addClass("info-link").appendTo(ul);
+    });
+    ul.closest("tr").show();
+    $(".td-nolittles").parent().hide();
+  } else {
+    $(".td-littles").parent().hide();
+    $(".td-nolittles").parent().show();
+  }
+  // Populate 
+  $(".info").show();
 }
 
 /*** LineageTree Search Box Initialization ***/

@@ -10,16 +10,30 @@
   </head>
   <body>
     <svg id="tree-box"></svg>
-    <div class="nav">
+    <div class="nav container">
       <svg id="nav-box"></svg>
     </div>
-    <div class="search" tabindex="-1">
+    <div class="info container" style="display: none;">
+      <table>
+        <thead>
+          <tr><th class="td-name" colspan=2></th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Year</th><td class="td-year"></td></tr>
+          <tr><th>Pledge Class</th><td class="td-pledge"></td></tr>
+          <tr><th>Big</th><td class="td-big info-link"></td></tr>
+          <tr><th>Littles</th><td class="td-littles"><ul></ul></td></tr>
+          <tr><th></th><td class="td-nolittles">No Littles</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="search container" tabindex="-1">
       <input type="text" id="search-box" placeholder="Type a name..." disabled>
       <div id="results-box" style="display: none;"></div>
     </div>
     <script>
       var tree;
     </script>
-    <script src="https://spreadsheets.google.com/feeds/cells/1LcA_HI0qqyqXtJQlARe3N6EE6XFtKDSnye68-jAWjDo/1/public/values?alt=json-in-script&callback=drawGraph"></script>
+    <script src="https://spreadsheets.google.com/feeds/cells/XXX/1/public/values?alt=json-in-script&callback=drawGraph"></script>
   </body>
 </html>
