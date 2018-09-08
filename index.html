@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lineage Tree</title>
+    <link href="lineagetree.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="d3.v5.js"></script>
+    <script src="lineagetree.js"></script>
+  </head>
+  <body>
+    <svg id="tree-box"></svg>
+    <div class="nav">
+      <svg id="nav-box"></svg>
+    </div>
+    <div class="search" tabindex="-1">
+      <input type="text" id="search-box" placeholder="Type a name..." disabled>
+      <div id="results-box" style="display: none;"></div>
+    </div>
+    <script>
+      var tree;
+    </script>
+    <script src="https://spreadsheets.google.com/feeds/cells/1LcA_HI0qqyqXtJQlARe3N6EE6XFtKDSnye68-jAWjDo/1/public/values?alt=json-in-script&callback=drawGraph"></script>
+  </body>
+</html>

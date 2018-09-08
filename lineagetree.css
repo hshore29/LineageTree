@@ -22,6 +22,7 @@ body {
   right: 15px;
   padding: 4px;
   background-color: #FFF;
+  outline: none;
 }
 
 input[type="text"] {
@@ -88,12 +89,24 @@ input[disabled] {
   stroke: #007bff;
   stroke-width: 3px;
 }
+.node rect.ancestor {
+  stroke: #007bff;
+}
+.node rect.descendant {
+  stroke: orange;
+}
 
 .link {
   fill: none;
   stroke: #000;
   stroke-width: 1px;
   image-rendering: crisp-edges;
+}
+.link.ancestor {
+  stroke: #007bff !important;
+}
+.link.descendant {
+  stroke: orange !important;
 }
 
 #nav-box .link {
