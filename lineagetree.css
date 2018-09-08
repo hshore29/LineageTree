@@ -80,11 +80,20 @@ tbody ul {
   margin: 0;
   padding: 0;
   list-style: none;
+  max-height: 100px;
+  overflow-y: scroll;
 }
 tbody li {
   padding-bottom: 1px;
 }
-.td-nolittles {
+.subhead {
+  background-color: #fafafa;
+  text-align: center;
+}
+.subhead th {
+  padding: 4px;
+}
+.td-nolittles, .td-noactives {
   font-style: italic;
   font-weight: lighter;
 }

@@ -160,9 +160,9 @@ function LineageTree(data) {
               .attr("class", d => "link t-" + d.target.data.id)
               .attr("d", _.linkPathGen(_.navScaleX, _.navScaleY));
   // Add dots for undergrad nodes
+  _.actives = _.nodeList.filter(n => n.data.active);
   _.nav.append("g").attr("class", "undergrads")
-      .selectAll(".dot")
-      .data(_.nodeList.filter(n => n.data.active)).enter()
+      .selectAll(".dot").data(_.actives).enter()
       .append("circle")
           .attr("class", d => "dot a-" + d.data.id)
           .attr("cx", d => _.navScaleX(d.x))
@@ -219,6 +219,7 @@ function LineageTree(data) {
   });
 
   // Add Infobox link listener
+  $(".td-act-count").html("<span></span> / " + _.actives.length);
   $(".info").on("click", ".info-link", function() {
     let node = _.nodeList.filter(n => n.data.id == $(this).data("id"));
     if (node.length == 1) {
@@ -369,7 +370,23 @@ LineageTree.prototype.activateNode = function(node, i, fromSearch) {
     $(".td-littles").parent().hide();
     $(".td-nolittles").parent().show();
   }
-  // Populate 
+  // Populate Infobox - descendant details
+  let desc = node.descendants().slice(1);
+  if (desc.length > 0) {
+    $(".td-desc-count").text(desc.length);
+    let actives = desc.filter(d => d.data.active);
+    if (actives.length > 0) {
+      $(".td-act-count span").text(actives.length);
+      $(".td-act-count").parent().show();
+      $(".td-noactives").parent().hide();
+    } else {
+      $(".td-act-count").parent().hide();
+      $(".td-noactives").parent().show();
+    }
+    $(".descendants").show();
+  } else {
+    $(".descendants").hide();
+  }
   $(".info").show();
 }
 
