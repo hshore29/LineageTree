@@ -9,7 +9,7 @@ function drawGraph(data) {
     while (+cell["gs$cell"].col - 1 > rawdata[rawdata.length - 1].length) {
       rawdata[rawdata.length - 1].push(null);
     }
-    // Push cell value to 
+    // Push cell value to end of row
     rawdata[rawdata.length - 1].push(cell["gs$cell"]["$t"]);
   });
 
@@ -17,11 +17,10 @@ function drawGraph(data) {
   let cleandata = [];
   let header = rawdata.shift();
   rawdata.forEach(function(row, index) {
-    let mapped = {id: index};
-    for (let i=0; i < row.length; i++) {
-      mapped[header[i]] = row[i];
-    }
-    cleandata.push(mapped);
+    cleandata.push(row.reduce((map, r, i) => {
+      map[header[i]] = r;
+      return map;
+    }, {id: index}));
   });
 
   // Run any necessary data conversion
@@ -29,9 +28,10 @@ function drawGraph(data) {
     row.year = +row.year;
   });
 
-  // Create 
+  // Create Lineage Tree
   tree = new LineageTree(cleandata);
 }
+
 
 /*** Lineage Tree Drawing Class ***/
 function LineageTree(data) {
@@ -41,31 +41,14 @@ function LineageTree(data) {
   _.svg = d3.select("#tree-box");
   _.view = _.svg.append("g").attr("class", "view-box");
   _.nav = d3.select("#nav-box");
-
-  // Tree function
-  _.tree = d3.tree().nodeSize([
-    _.box.width + _.box.margin,
-    _.box.height + _.box.margin
-  ]).separation((a, b) => {
-    // If we share a parent, keep padding tight
-    if (a.parent == b.parent) return 1;
-    // Otherwise, add padding so we don't overlap either node's children
-    let sep = 1;
-    if (a.children) sep += (a.children.length - 1) / 2;
-    if (b.children) sep += (b.children.length - 1) / 2;
-    return sep;
-  });
+  _.k = 1;
 
   // Stratify Data
-  for (let i=0; i < data.length; i++) {
-    if (data.filter(d => d.name == data[i].parent).length == 0) {
-      data[i].parent = "N/A";
-    }
-  }
-  let dummyRoot = {
-    name: "N/A", year: d3.min(data, d => d.year) - 1, parent: null, dummy: true
-  };
-  data.splice(0, 0, dummyRoot);
+  data.forEach(function(d) {
+    if (data.filter(f => f.name == d.parent).length == 0) d.parent = "N/A";
+  })
+  data.splice(0, 0, {name: "N/A", year: d3.min(data, d => d.year) - 1,
+                     parent: null, dummy: true});
   _.root = d3.stratify().id(d => d.name).parentId(d => d.parent)(data);
   _.nodeList = _.root.descendants();
   _.linkList = _.root.links();
@@ -77,7 +60,8 @@ function LineageTree(data) {
   });
 
   // Modify nodes before calculating node positions
-  for (let i=1; i < _.nodeList.length; i++) {
+  // Use a for loop since we want to run over nodes we add during the loop
+  for (let i = 1; i < _.nodeList.length; i++) {
     let n = _.nodeList[i];
     // If this node is equal to its parent's year, move it up the tree
     while (n.data.year <= n.parent.data.year) {
@@ -89,23 +73,25 @@ function LineageTree(data) {
     }
   }
 
-  // Calculate node positions
-  _.tree(_.root);
+  // Tree function - Calculate node positions
+  d3.tree()
+      .nodeSize([_.box.width + _.box.margin, _.box.height + _.box.margin])
+      .separation((a, b) => {
+        // If we share a parent, keep padding tight
+        if (a.parent == b.parent) return 1;
+        // Otherwise, add padding so we don't overlap either node's children
+        let sep = 1;
+        if (a.children) sep += (a.children.length - 1) / 2;
+        if (b.children) sep += (b.children.length - 1) / 2;
+        return sep;
+      })(_.root);
 
   // Remove dummy nodes
   _.nodeList = _.nodeList.filter(n => !n.data.dummy);
-  for (let i=1; i < _.nodeList.length; i++) {
-    let n = _.nodeList[i];
+  _.nodeList.forEach(function(n) {
     n.parent = n.realParent;
     n.children = n.realChildren;
-  }
-
-  // Get dimensions of Tree 
-  let leaves = _.root.leaves();
-  _.xMin = d3.min(leaves, d => d.x) - (_.box.width + _.box.margin) / 2;
-  _.xMax = d3.max(leaves, d => d.x) + (_.box.width + _.box.margin) / 2;
-  _.yMin = 0 - _.box.margin / 2;
-  _.yMax = d3.max(leaves, d => d.y) + _.box.height + _.box.margin / 2;
+  })
 
   // Draw lineage tree
   // Draw links
@@ -145,15 +131,23 @@ function LineageTree(data) {
       .text(d => d.data.pledge_label)
       .on("click", _.activateNode);
 
+  // Get dimensions of Tree
+  let leaves = _.root.leaves();
+  let xMin = d3.min(leaves, d => d.x) - (_.box.width + _.box.margin) / 2;
+  let xMax = d3.max(leaves, d => d.x) + (_.box.width + _.box.margin) / 2;
+  let yMin = 0 - _.box.margin / 2;
+  let yMax = d3.max(leaves, d => d.y) + _.box.height + _.box.margin / 2;
+
   // Define nav box scales
-  _.navWidth = _.navHeight * (_.xMax - _.xMin) / (_.yMax - _.yMin);
-  _.navScaleY = d3.scaleLinear().domain([_.yMin, _.yMax])
+  _.navWidth = _.navHeight * (xMax - xMin) / (yMax - yMin);
+  _.navScaleY = d3.scaleLinear().domain([yMin, yMax])
       .range([0, _.navHeight]);
-  _.navScaleX = d3.scaleLinear().domain([_.xMin, _.xMax])
+  _.navScaleX = d3.scaleLinear().domain([xMin, xMax])
       .range([0, _.navWidth]);
 
-  // Set nav box size, draw links & initialize brush
+  // Set nav box size
   _.nav.attr("height", _.navHeight).attr("width", _.navWidth);
+  // Draw nav links
   _.nav.append("g").attr("class", "links")
       .selectAll(".link").data(_.linkList).enter()
           .append("path")
@@ -168,14 +162,15 @@ function LineageTree(data) {
           .attr("cx", d => _.navScaleX(d.x))
           .attr("cy", d => _.navScaleY(d.y))
           .attr("r", 1.5);
+
+  // Initialize Brush
   _.brush = _.nav.append("rect").attr("class", "brush");
-  _.updateBrush({x: 0, y: 0, k: 1});
+  _.updateBrush({x: 0, y: 0});
 
   // Initialize Pan & Zoom behavior
-  _.k = 1;
   _.zoom = d3.zoom()
       .scaleExtent([0.5, 1])
-      .translateExtent([[_.xMin, _.yMin], [_.xMax, _.yMax]])
+      .translateExtent([[xMin, yMin], [xMax, yMax]])
       .on("zoom", zoomed);
   function zoomed() {
     _.k = d3.event.transform.k;
@@ -207,26 +202,12 @@ function LineageTree(data) {
   }
   _.brush.call(_.drag);
 
-  // Initialize search box
+  // Initialize additional features
   _.initSearch();
+  _.initInfoBox();
 
   // Add Resize Listener
-  window.addEventListener("resize", function() {
-    let svg = $("svg");
-    _.brush
-      .attr("width", (_.navScaleX(svg.width()) - _.navScaleX(0)) / _.k)
-      .attr("height", (_.navScaleY(svg.height()) - _.navScaleY(0)) / _.k);
-  });
-
-  // Add Infobox link listener
-  $(".td-act-count").html("<span></span> / " + _.actives.length);
-  $(".info").on("click", ".info-link", function() {
-    let node = _.nodeList.filter(n => n.data.id == $(this).data("id"));
-    if (node.length == 1) {
-      _.svg.transition().call(_.zoom.translateTo, node[0].x, node[0].y);
-      _.activateNode(node[0]);
-    }
-  });
+  window.addEventListener("resize", () => _.updateBrush());
 }
 
 /*** LineageTree Tree Manipulation Functions ***/
@@ -244,7 +225,7 @@ LineageTree.prototype.insertParent = function(i) {
   c.parent = b;
   // Update depth
   b.depth = a.depth + 1;
-  c.descendants().map(n => n.depth += 1);
+  c.descendants().forEach(n => n.depth += 1);
   // Height doesn't seem to be used, so we won't update it
   this.nodeList.splice(i, 0, b);
 }
@@ -261,7 +242,7 @@ LineageTree.prototype.elevateNode = function(i) {
   let ni = ci == 0 && cl > 1 ? 0 : cl;
   p.parent.children.splice(ni, 0, n);
   // Update depth
-  n.descendants().map(d => d.depth--);
+  n.descendants().forEach(d => d.depth--);
   // Height doesn't seem to be used, so we won't update it
   // Set n's parent to p's parent
   n.parent = p.parent;
@@ -283,12 +264,13 @@ LineageTree.prototype.elevateNode = function(i) {
 
 /*** LineageTree Graph Listener Functions ***/
 LineageTree.prototype.updateBrush = function(e) {
+  let _ = this;
   let svg = $("svg");
-  this.brush
-      .attr("x", this.navScaleX(-e.x / e.k))
-      .attr("y", this.navScaleY(-e.y / e.k))
-      .attr("width", (this.navScaleX(svg.width()) - this.navScaleX(0)) / e.k)
-      .attr("height", (this.navScaleY(svg.height()) - this.navScaleY(0)) / e.k);
+  _.brush
+      .attr("width", (_.navScaleX(svg.width()) - _.navScaleX(0)) / _.k)
+      .attr("height", (_.navScaleY(svg.height()) - _.navScaleY(0)) / _.k);
+  if (e) _.brush.attr("x", _.navScaleX(-e.x / _.k));
+  if (e) _.brush.attr("y", _.navScaleY(-e.y / _.k));
 }
 
 LineageTree.prototype.linkPathGen = function (x, y) {
@@ -390,13 +372,13 @@ LineageTree.prototype.activateNode = function(node, i, fromSearch) {
   $(".info").show();
 }
 
-/*** LineageTree Search Box Initialization ***/
+/*** LineageTree Search Box Functions ***/
 LineageTree.prototype.initSearch = function() {
   var _ = this;
 
   // Add Event Listeners
-  $("#search-box").on("keyup", () => _.search(_));
-  $("#search-box").on("focus", () => _.search(_));
+  $("#search-box").on("keyup", () => _.search());
+  $("#search-box").on("focus", () => _.search());
   $("#search-box").parent().on("focusout", function(e) {
     if (e.relatedTarget != this) $(".results-box").hide();
   });
@@ -416,26 +398,41 @@ LineageTree.prototype.initSearch = function() {
   $("#search-box").prop("disabled", false);
 }
 
-LineageTree.prototype.search = function(context) {
-  let _ = context;
+LineageTree.prototype.search = function() {
+  let _ = this;
   let q = $("#search-box").val().toLowerCase();
+  let resultsBox = $(".results-box");
   if (q.length < 3) {
-    $(".results-box").hide();
+    resultsBox.hide();
     return;
   }
   let results = _.nodeList.filter(n => n.data.dummy !== true)
       .filter(n => n.id.toLowerCase().includes(q))
       .sort((a, b) => a.data.year - b.data.year);
   if (results.length < 1) {
-    $(".results-box").hide();
+    resultsBox.hide();
     return;
   }
-  d3.selectAll(".result").remove();
-  d3.select(".results-box")
-      .selectAll(".result").data(results).enter()
-      .append("div")
-          .attr("class", "result")
-          .attr("data-id", r => r.id)
-          .text(r => r.id + " '" + r.data.year.toString().substr(2));
-  $(".results-box").show();
+  resultsBox.empty();
+  results.forEach(function(r) {
+    $("<div>").addClass("result").data("id", r.id)
+        .text(r.id + " '" + r.data.year.toString().substr(2))
+        .appendTo(resultsBox);
+  });
+  resultsBox.show();
+}
+
+/*** LineageTree Info Box Functions ***/
+LineageTree.prototype.initInfoBox = function() {
+  let _ = this;
+  // Set active count default text
+  $(".td-act-count").html("<span></span> / " + _.actives.length);
+  // Add Info-Link listener
+  $(".info").on("click", ".info-link", function() {
+    let node = _.nodeList.filter(n => n.data.id == $(this).data("id"));
+    if (node.length == 1) {
+      _.svg.transition().call(_.zoom.translateTo, node[0].x, node[0].y);
+      _.activateNode(node[0]);
+    }
+  });
 }
