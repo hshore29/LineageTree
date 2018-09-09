@@ -29,19 +29,31 @@ function drawGraph(data) {
   });
 
   // Create Lineage Tree
-  tree = new LineageTree(cleandata);
+  tree = new LineageTree(cleandata, "body");
 }
 
 
 /*** Lineage Tree Drawing Class ***/
-function LineageTree(data) {
+function LineageTree(data, container) {
   let _ = this;
   _.box = {width: 130, height: 56, margin: 20};
   _.navHeight = 150;
-  _.svg = d3.select("#tree-box");
-  _.view = _.svg.append("g").attr("class", "view-box");
-  _.nav = d3.select("#nav-box");
+  _.logoHeight = 3/4;
+  _.logoOpacity = 0.33;
   _.k = 1;
+  _.logoSrc = "logo.svg";
+  _.body = d3.select(container);
+  _.svg = _.body.append("svg").attr("width", "100%").attr("height", "100%");
+  _.nav = _.body.append("div").attr("class", "nav container").append("svg");
+  _.view = _.svg.append("g").attr("class", "view-box");
+
+  // Set up background containers
+  let bkgSource = _.body.append("div").style("display", "none")
+      .append("svg").attr("id", "background");
+  _.viewUse = _.view.append("use").attr("xlink:href", "#background")
+      .attr("opacity", _.logoOpacity);
+  _.navUse = _.nav.append("use").attr("xlink:href", "#background")
+      .attr("opacity", _.logoOpacity);
 
   // Stratify Data
   data.forEach(function(d) {
@@ -163,6 +175,23 @@ function LineageTree(data) {
           .attr("cy", d => _.navScaleY(d.y))
           .attr("r", 1.5);
 
+  // Load Background
+  d3.xml(_.logoSrc).then(function(svg) {
+    let svgTag = svg.getElementsByTagName("svg")[0];
+    bkgSource.node().appendChild(svgTag);
+    let bkgX = +svgTag.getAttribute("width");
+    let bkgY = +svgTag.getAttribute("height");
+    let viewScale = yMax / bkgY * _.logoHeight;
+    _.viewUse.attr("transform", "translate(" + -bkgX * viewScale / 2 +
+                   "," + (_.box.height + _.box.margin) * 2 + ") " +
+                   "scale(" + viewScale  + ")");
+    let navScale = _.navHeight / bkgY * _.logoHeight;
+    _.navUse.attr("width", bkgX).attr("height", bkgY)
+      .attr("transform", "translate(" + (_.navScaleX(0) - bkgX * navScale / 2) +
+            "," + _.navScaleY(_.box.height + _.box.margin) * 2 + ") " +
+            "scale(" + navScale + ")");
+  });
+
   // Initialize Brush
   _.brush = _.nav.append("rect").attr("class", "brush");
   _.updateBrush({x: 0, y: 0});
@@ -208,6 +237,9 @@ function LineageTree(data) {
 
   // Add Resize Listener
   window.addEventListener("resize", () => _.updateBrush());
+
+  // Move to Center
+  _.svg.call(_.zoom.translateTo, 0, 0);
 }
 
 /*** LineageTree Tree Manipulation Functions ***/
@@ -265,7 +297,7 @@ LineageTree.prototype.elevateNode = function(i) {
 /*** LineageTree Graph Listener Functions ***/
 LineageTree.prototype.updateBrush = function(e) {
   let _ = this;
-  let svg = $("svg");
+  let svg = $(_.svg.node());
   _.brush
       .attr("width", (_.navScaleX(svg.width()) - _.navScaleX(0)) / _.k)
       .attr("height", (_.navScaleY(svg.height()) - _.navScaleY(0)) / _.k);

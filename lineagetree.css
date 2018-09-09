@@ -41,10 +41,6 @@ body {
   top: 15px;
   width: 250px;
 }
-#tree-box {
-  height: 100%;
-  width: 100%;
-}
 
 /* Search Box styles */
 input[type="text"] {
