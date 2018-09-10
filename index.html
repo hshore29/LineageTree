@@ -34,8 +34,8 @@
       <div class="results-box" style="display: none;"></div>
     </div>
     <script>
-      var tree;
+      var tree = new LineageTree("body", "logo.svg");
     </script>
-    <script src="https://spreadsheets.google.com/feeds/cells/XXX/1/public/values?alt=json-in-script&callback=drawGraph"></script>
+    <script src="https://spreadsheets.google.com/feeds/cells/XXX/1/public/values?alt=json-in-script&callback=tree.parseGoogleSheet"></script>
   </body>
 </html>
