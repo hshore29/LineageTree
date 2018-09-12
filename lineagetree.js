@@ -55,6 +55,19 @@ function LineageTree(container, logoURL) {
   _.nav.append("g").attr("class", "link-layer");
   _.nav.append("g").attr("class", "node-layer");
 
+  // Add Splash Screen
+  _.body.append("div").attr("class", "splash-back");
+  _.splash = _.body.append("div").attr("class", "splash-text").html(
+    "<h1>Lineages of Kappa Delta Rho, Beta Chapter</h1>" +
+    "<p>Explore the lineages of KDR! Move around the tree by dragging, and " +
+    "scroll to zoom in or out. You can also navigate by dragging the brush " +
+    "in the map to the lower left.</p>" +
+    "<p>Click on a brother to see information about their lineage, or type a " +
+    "name in the search bar to locate someone on the tree.</p>" +
+    "<p>When you select a brother, their ancestors and descendants will be " +
+    "highlighted on the tree and the map</p>"
+  );
+
   // Tree functions
   _.stratify = d3.stratify().id(d => d.name).parentId(d => d.parent);
   _.tree = d3.tree()
@@ -171,6 +184,13 @@ LineageTree.prototype.buildTree = function(data) {
   _.initSearch();
   _.initInfoBox();
 
+  // Allow splash to be dismissed
+  _.splash.on("click", function() {
+    $(".splash-back, .splash-text").hide();
+  }).append("div").attr("class", "okay").text("Click to start exploring!");
+  $(".splash-back").on("click", function() {
+    $(".splash-back, .splash-text").hide();
+  });
 }
 
 /*** LineageTree Tree Manipulation Functions ***/

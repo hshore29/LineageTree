@@ -34,6 +34,32 @@
   width: 250px;
 }
 
+/* Splash Screen */
+.splash-back {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: white;
+  opacity: 0.8;
+  z-index: 100;
+}
+.splash-text {
+  padding-top: 50px;
+  color: #0a0a0a;
+  text-align: center;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  font-weight: bold;
+  z-index: 110;
+}
+.splash-text p, .splash-text h1 {
+  margin-left: 80px;
+  margin-right: 80px;
+  /*text-shadow: 2px 2px 4px black;*/
+}
+
 /* Search Box styles */
 input[type="text"] {
   border: 1px solid #aaa;
