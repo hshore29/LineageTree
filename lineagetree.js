@@ -7,13 +7,38 @@ function LineageTree(container, logoURL) {
   _.logoOpacity = 0.25;
   _.k = 1;
   _.backgroundURL = logoURL || null;
-  
+
   // Create main containers
   _.body = d3.select(container);
   _.svg = _.body.append("svg").attr("width", "100%").attr("height", "100%");
   _.view = _.svg.append("g").attr("class", "view-box");
   _.nav = _.body.append("div").attr("class", "nav container").append("svg");
-  
+
+  // Set up search container
+  _.body.append("div").attr("class", "search container").html(
+    "<input type='text' id='search-box' placeholder='Type a name…' disabled>" +
+    "<div class='results-box' style='display: none;'></div>"
+  ).attr("tabindex", -1);
+
+  // Set up InfoBox container
+  _.body.append("div").attr("class", "info container")
+    .style("display", "none").html(
+      "<table><thead>" +
+      "<tr><th class='td-name' colspan=2></th></tr>" +
+      "</thead><tbody class='metadata'>" +
+      "<tr><th>Year</th><td class='td-year'></td></tr>" +
+      "<tr><th>Pledge Class</th><td class='td-pledge'></td></tr>" +
+      "<tr><th>Big</th><td class='td-big info-link'></td></tr>" +
+      "<tr><th>Littles</th><td class='td-littles'><ul></ul></td></tr>" +
+      "<tr><th></th><td class='td-nolittles'>No Littles</td></tr>" +
+      "</tbody><tbody class='descendants'>" +
+      "<tr class='subhead'><th colspan=2>Lineage Stats</th></tr>" +
+      "<tr><th>Descendants</th><td class='td-desc-count'></td></tr>" +
+      "<tr><th>Actives</th><td class='td-act-count'></td></tr>" +
+      "<tr><th></th><td class='td-noactives'>No Actives</td></tr>" +
+      "</tbody></table>"
+    );
+
   // Set up background containers
   if (_.backgroundURL) {
     _.bkgSource = _.body.append("div").style("display", "none")
@@ -294,7 +319,7 @@ LineageTree.prototype.drawGraphAndNav = function() {
   _.brush.call(_.drag);
 
   // Add Resize Listener
-  window.addEventListener("resize", () => _.updateBrush());
+  window.addEventListener("resize", _.updateBrush.bind(this));
 
   // Move to Center
   _.svg.call(_.zoom.translateTo, 0, 0);
@@ -329,8 +354,8 @@ LineageTree.prototype.updateBrush = function(e) {
   _.brush
       .attr("width", (_.navScaleX(svg.width()) - _.navScaleX(0)) / _.k)
       .attr("height", (_.navScaleY(svg.height()) - _.navScaleY(0)) / _.k);
-  if (e) _.brush.attr("x", _.navScaleX(-e.x / _.k));
-  if (e) _.brush.attr("y", _.navScaleY(-e.y / _.k));
+  if (e.x) _.brush.attr("x", _.navScaleX(-e.x / _.k));
+  if (e.y) _.brush.attr("y", _.navScaleY(-e.y / _.k));
 }
 
 LineageTree.prototype.linkPathGen = function (x, y) {
@@ -437,8 +462,8 @@ LineageTree.prototype.initSearch = function() {
   var _ = this;
 
   // Add Event Listeners
-  $("#search-box").on("keyup", () => _.search());
-  $("#search-box").on("focus", () => _.search());
+  $("#search-box").on("keyup", this.search.bind(this));
+  $("#search-box").on("focus", this.search.bind(this));
   $("#search-box").parent().on("focusout", function(e) {
     if (e.relatedTarget != this) $(".results-box").hide();
   });
@@ -459,14 +484,13 @@ LineageTree.prototype.initSearch = function() {
 }
 
 LineageTree.prototype.search = function() {
-  let _ = this;
   let q = $("#search-box").val().toLowerCase();
   let resultsBox = $(".results-box");
   if (q.length < 3) {
     resultsBox.hide();
     return;
   }
-  let results = _.nodeList.filter(n => n.data.dummy !== true)
+  let results = this.nodeList.filter(n => n.data.dummy !== true)
       .filter(n => n.id.toLowerCase().includes(q))
       .sort((a, b) => a.data.year - b.data.year);
   if (results.length < 1) {
