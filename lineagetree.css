@@ -33,6 +33,21 @@
   top: 15px;
   width: 250px;
 }
+.save {
+  bottom: 15px;
+  left: 15px;
+  font-size: 12px;
+  font-weight: 200;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.5s;
+}
+.save:hover {
+  opacity: 0.8;
+}
+.save.loading {
+  opacity: 0.8;
+}
 
 /* Splash Screen */
 .splash-back {
@@ -180,7 +195,8 @@ tbody li {
   fill: #e77500;
 }
 .brush {
-  fill: #888;
-  opacity: 0.4;
-  stroke: none;
+  fill: #aaa;
+  fill-opacity: 0.4;
+  stroke: #1158a0;
+  stroke-width: 2px;
 }

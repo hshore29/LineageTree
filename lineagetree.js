@@ -39,14 +39,15 @@ function LineageTree(container, logoURL) {
       "</tbody></table>"
     );
 
+  // Set up download button
+  _.dlBtn = _.body.append("div").attr("class", "save container")
+      .text("Download Tree");
+
   // Set up background containers
   if (_.backgroundURL) {
-    _.bkgSource = _.body.append("div").style("display", "none")
-        .append("svg").attr("id", "background");
-    _.viewUse = _.view.append("use").attr("xlink:href", "#background")
-        .attr("opacity", _.logoOpacity);
-    _.navUse = _.nav.append("use").attr("xlink:href", "#background")
-        .attr("opacity", _.logoOpacity);
+    _.bkgSource = _.view.append("g").attr("opacity", _.logoOpacity)
+        .attr("id", "background");
+    _.navUse = _.nav.append("use").attr("xlink:href", "#background");
   }
 
   // Add graph layers
@@ -191,6 +192,9 @@ LineageTree.prototype.buildTree = function(data) {
   $(".splash-back").on("click", function() {
     $(".splash-back, .splash-text").hide();
   });
+
+  // Add Download listener
+  _.dlBtn.on("click", _.download.bind(_));
 }
 
 /*** LineageTree Tree Manipulation Functions ***/
@@ -283,6 +287,9 @@ LineageTree.prototype.drawGraphAndNav = function() {
       .text(d => d.data.pledge_label)
       .on("click", _.activateNode);
 
+  // Add deselect listener
+  _.svg.on("click", _.deactivateNode);
+
   // Set nav box size
   _.nav.attr("height", _.navHeight).attr("width", _.navWidth);
 
@@ -357,11 +364,11 @@ LineageTree.prototype.loadBackground = function() {
       let viewScale = _.yMax / bkgY * _.logoHeight;
       let dx = -bkgX / 2;
       let dy = _.box.height + _.box.margin * 2;
-      _.viewUse.attr("transform", "translate(" + dx * viewScale + "," +
+      _.bkgSource.attr("transform", "translate(" + dx * viewScale + "," +
                      dy + ") scale(" + viewScale  + ")");
-      let navScale = _.navHeight / bkgY * _.logoHeight;
+      let navScale = _.navHeight / bkgY * _.logoHeight / viewScale;
       _.navUse.attr("width", bkgX).attr("height", bkgY)
-        .attr("transform", "translate(" + (_.navScaleX(0) + dx * navScale) +
+        .attr("transform", "translate(" + (_.navScaleX(0) + dx * navScale / viewScale) +
               "," + _.navScaleY(dy) * 2 + ") scale(" + navScale + ")");
     });
   }
@@ -410,6 +417,8 @@ LineageTree.prototype.linkPathGen = function (x, y) {
 }
 
 LineageTree.prototype.activateNode = function(node, i, fromSearch) {
+  if (d3.event) d3.event.stopPropagation();
+
   // Reset Node & Link Classes
   $(".node-active").removeClass("node-active");
   $(".node-ancestor").removeClass("node-ancestor");
@@ -477,6 +486,19 @@ LineageTree.prototype.activateNode = function(node, i, fromSearch) {
   $(".info").show();
 }
 
+LineageTree.prototype.deactivateNode = function() {
+  // Reset Node & Link Classes
+  $(".node-active").removeClass("node-active");
+  $(".node-ancestor").removeClass("node-ancestor");
+  $(".node-descendant").removeClass("node-descendant");
+  $(".link-ancestor").removeClass("link-ancestor");
+  $(".link-descendant").removeClass("link-descendant");
+  $(".dot-descendant").removeClass("dot-descendant");
+
+  // Hide Infobox
+  $(".info").hide();
+}
+
 /*** LineageTree Search Box Functions ***/
 LineageTree.prototype.initSearch = function() {
   var _ = this;
@@ -539,4 +561,68 @@ LineageTree.prototype.initInfoBox = function() {
       _.activateNode(node[0]);
     }
   });
+}
+
+/*** Download SVG as File ***/
+LineageTree.prototype.download = function() {
+  // Get SVG elements
+  this.dlBtn.classed("loading", true);
+  let svg = document.getElementsByClassName("view-box")[0];
+  this.cssToInline(svg);
+
+  // Get SVG source
+  let serializer = new XMLSerializer();
+  let source = serializer.serializeToString(svg);
+
+  // Add outer <svg> tag with namespaces
+  source = "<svg xmlns='http://www.w3.org/2000/svg' " +
+           "xmlns:xlink='http://www.w3.org/1999/xlink'>" + source + "</svg>";
+  // Add XML declaration
+  source = "<?xml version='1.0' standalone='no'?>\r\n" + source;
+
+  // Convert to URI data scheme
+  let url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+
+  // Create and click link
+  this.dlBtn.text("Downloading...");
+  let link = document.createElement("a");
+  link.href = url;
+  link.download = "lineagetree";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  location.reload();
+}
+
+// Source = https://www.w3.org/TR/SVG11/styling.html
+const includedStyles = [
+  'font', 'font-family', 'font-size', 'font-size-adjust', 'font-stretch',
+  'font-style', 'font-variant', 'font-weight', 'direction', 'letter-spacing',
+  'text-decoration', 'word-spacing', 'color', 'cursor', 'display', 'overflow',
+  'visibility', 'clip-path', 'clip-rule', 'mask', 'opacity',
+  'enable-background', 'filter', 'flood-color', 'flood-opacity',
+  'lighting-color', 'stop-color', 'stop-opacity', 'fill', 'fill-opacity',
+  'fill-rule', 'stroke', 'stroke-dasharray', 'stroke-dashoffset',
+  'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity',
+  'stroke-width', 'alignment-baseline', 'baseline-shift', 'text-anchor'
+];
+LineageTree.prototype.cssToInline = function(node) {
+  if (node.nodeName === "svg") return;
+  if (node.nodeName === "#text") return;
+  // Get computed styles
+  let style = window.getComputedStyle(node);
+  // Loop through node's styles, adding them inline
+  Object.keys(style).forEach(prop => {
+    if (includedStyles.indexOf(prop) > -1) {
+      if (node.style[prop] === "") {
+        node.style[prop] = style.getPropertyValue(prop);
+      }
+    }
+  });
+  // Repeat for child nodes
+  if (node.childNodes) {
+    node.childNodes.forEach(child => {
+      this.cssToInline(child);
+    });
+  }
 }
