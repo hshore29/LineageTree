@@ -568,6 +568,7 @@ LineageTree.prototype.download = function() {
   // Get SVG elements
   this.dlBtn.classed("loading", true);
   let svg = document.getElementsByClassName("view-box")[0];
+  this.deactivateNode();
   this.cssToInline(svg);
 
   // Get SVG source

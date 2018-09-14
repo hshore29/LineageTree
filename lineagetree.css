@@ -98,7 +98,7 @@ input[disabled] {
 .result {
   cursor: pointer;
   font-size: 11pt;
-  padding: 4px 24px;
+  padding: 4px 12px;
 }
 .result:hover {
   background-color: #fafafa;
