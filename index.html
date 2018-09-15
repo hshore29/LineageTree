@@ -19,7 +19,10 @@
   </head>
   <body>
     <script>
-      var tree = new LineageTree("body", "logo.svg");
+      var tree = new LineageTree({
+        container: "body",
+        logoUrl: "logo.svg"
+      });
     </script>
     <script src="https://spreadsheets.google.com/feeds/cells/XXX/1/public/values?alt=json-in-script&callback=tree.parseGoogleSheet"></script>
   </body>

@@ -1,15 +1,21 @@
 /*** Lineage Tree Drawing Class ***/
-function LineageTree(container, logoURL) {
+function LineageTree(args) {
   let _ = this;
+  args = args || {};
+
+  // Set attributes from arguments object with default values
+  _.backgroundURL = args.logoUrl || null;
+  _.container = args.container || "body";
+
+  // Set static attributes
   _.box = {width: 130, height: 56, margin: 20};
   _.navHeight = 150;
   _.logoHeight = 3/4;
   _.logoOpacity = 0.25;
   _.k = 1;
-  _.backgroundURL = logoURL || null;
 
   // Create main containers
-  _.body = d3.select(container);
+  _.body = d3.select(_.container);
   _.svg = _.body.append("svg").attr("width", "100%").attr("height", "100%");
   _.view = _.svg.append("g").attr("class", "view-box");
   _.nav = _.body.append("div").attr("class", "nav container").append("svg");
@@ -108,10 +114,9 @@ LineageTree.prototype.parseGoogleSheet = function(data) {
   let header = rawdata.shift();
   rawdata.forEach(function(row, index) {
     cleanrow = row.reduce((map, r, i) => {
-      map[header[i]] = r;
+      map[header[i]] = +r || r;
       return map;
     }, {id: index});
-    cleanrow.year = +cleanrow.year;
     cleandata.push(cleanrow);
   });
 
