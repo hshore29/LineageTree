@@ -9,6 +9,7 @@ function LineageTree(args) {
 
   // Set static attributes
   _.box = {width: 130, height: 56, margin: 20};
+  _.lineGap = _.box.margin / 3;
   _.navHeight = 150;
   _.logoHeight = 3/4;
   _.logoOpacity = 0.25;
@@ -393,27 +394,39 @@ LineageTree.prototype.updateBrush = function(e) {
 LineageTree.prototype.linkPathGen = function (x, y) {
   let _ = this;
   // Define line function with x and y scales
-  let line = d3.line().curve(d3.curveStepAfter);
+  let line = d3.line();
   if (x) line.x(d => x(d[0]));
   if (y) line.y(d => y(d[1]));
   // Create and return link function
   let linkPath = function (link) {
     let path = [];
     path.push([link.source.x, link.source.y]);
-    if (link.source.x != link.target.x) {
-    //if (link.source.x != link.target.x && link.source.y < link.target.y) {
+    if (link.source.y < link.target.y) {
       path.push([
         link.source.x,
-        link.source.y + _.box.height + (_.box.margin / 2)
+        link.source.y + _.box.height + _.box.margin - _.lineGap
       ]);
-    }
-    if (link.source.y >= link.target.y) {
+      path.push([
+        link.target.x,
+        link.source.y + _.box.height + _.box.margin - _.lineGap
+      ]);
+    } else {
+      path.push([
+        link.source.x,
+        link.source.y + _.box.height + _.lineGap
+      ]);
       path.push([
         (link.target.x + link.source.x) / 2,
-        link.target.y - (_.box.margin / 2)
+        link.source.y + _.box.height + _.lineGap
       ]);
-      //path.push([link.source.x, link.source.y + (_.box.height / 2)]);
-      //path.push([link.target.x, link.target.y + (_.box.height / 2)]);
+      path.push([
+        (link.target.x + link.source.x) / 2,
+        link.target.y - _.lineGap
+      ]);
+      path.push([
+        link.target.x,
+        link.target.y - _.lineGap
+      ]);
     }
     path.push([link.target.x, link.target.y]);
     return line(path);
