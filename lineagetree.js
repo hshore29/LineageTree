@@ -6,6 +6,12 @@ function LineageTree(args) {
   // Set attributes from arguments object with default values
   _.backgroundURL = args.logoUrl || null;
   _.container = args.container || "body";
+  _.initialTransform = d3.zoomIdentity
+    .translate(args.initialY || 0, args.initialX || 0)
+    .scale(args.initialScale || 1);
+  _.initialY = args.initialY || 0;
+  _.initialX = args.initialX || 0;
+  _.initialScale = args.initialScale || 1;
 
   // Set static attributes
   _.box = {width: 130, height: 56, margin: 20};
@@ -354,8 +360,9 @@ LineageTree.prototype.drawGraphAndNav = function() {
   // Add Resize Listener
   window.addEventListener("resize", _.updateBrush.bind(this));
 
-  // Move to Center
-  _.svg.call(_.zoom.translateTo, 0, 0);
+  // Move to Initial state
+  _.svg.call(_.zoom.translateTo, _.initialX, _.initialY);
+  _.svg.call(_.zoom.scaleTo, _.initialScale);
 }
 
 LineageTree.prototype.loadBackground = function() {
