@@ -103,18 +103,7 @@ function LineageTree(args) {
 
 /*** Google Sheets Call Back ***/
 LineageTree.prototype.parseGoogleSheet = function(data) {
-  let rawdata = [];
-  // Convert Google Sheets JSON to list of lists
-  data.feed.entry.forEach(function(cell) {
-    // If the cell is in col 1, start a new row
-    if (cell["gs$cell"].col == "1") rawdata.push([]);
-    // Fill in null cells
-    while (+cell["gs$cell"].col - 1 > rawdata[rawdata.length - 1].length) {
-      rawdata[rawdata.length - 1].push(null);
-    }
-    // Push cell value to end of row
-    rawdata[rawdata.length - 1].push(cell["gs$cell"]["$t"]);
-  });
+  let rawdata = data.values;
 
   // Convert list of lists to list of objects, based on headers
   let cleandata = [];
