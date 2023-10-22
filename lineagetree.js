@@ -21,6 +21,53 @@ function LineageTree(args) {
   _.logoOpacity = 0.25;
   _.k = 1;
 
+  // Tree functions
+  _.stratify = d3.stratify().id(d => d.name).parentId(d => d.parent);
+  _.tree = d3.tree()
+      .nodeSize([_.box.width + _.box.margin, _.box.height + _.box.margin])
+      .separation((a, b) => {
+        // If we share a parent, keep padding tight
+        if (a.parent == b.parent) return 1;
+        // Otherwise, add padding so we don't overlap either node's children
+        let sep = 1;
+        if (a.children) sep += (a.children.length - 1) / 2;
+        if (b.children) sep += (b.children.length - 1) / 2;
+        return sep;
+      })
+
+  // Define nav box scales
+  _.navScaleY = d3.scaleLinear();
+  _.navScaleX = d3.scaleLinear();
+
+  console.log("LineageTree initialized");
+}
+
+/*** Google Sheets Call Back ***/
+LineageTree.prototype.parseGoogleSheet = function(data) {
+  console.log("Recieved GoogleSheets");
+  // Deep copy required because of Squarespace's navigation scripts
+  let rawdata = JSON.parse(JSON.stringify(data.values));
+
+  // Convert list of lists to list of objects, based on headers
+  let cleandata = [];
+  let header = rawdata.shift();
+  rawdata.forEach(function(row, index) {
+    cleanrow = row.reduce((map, r, i) => {
+      map[header[i]] = +r || r;
+      return map;
+    }, {id: index});
+    cleandata.push(cleanrow);
+  });
+
+  // Trigger data processing function
+  this.buildTree(cleandata);
+}
+
+/*** Build Tree from hierarchical data ***/
+LineageTree.prototype.buildTree = function(data) {
+  console.log("Building Tree");
+  let _ = this;
+
   // Create main containers
   _.body = d3.select(_.container);
   _.svg = _.body.append("svg").attr("width", "100%").attr("height", "100%");
@@ -54,7 +101,7 @@ function LineageTree(args) {
 
   // Set up download button
   _.dlBtn = _.body.append("div").attr("class", "save container")
-      .text("Download Tree");
+    .text("Download Tree");
 
   // Set up background containers
   if (_.backgroundURL) {
@@ -82,47 +129,6 @@ function LineageTree(args) {
     "highlighted on the tree and the map</p>"
   );
 
-  // Tree functions
-  _.stratify = d3.stratify().id(d => d.name).parentId(d => d.parent);
-  _.tree = d3.tree()
-      .nodeSize([_.box.width + _.box.margin, _.box.height + _.box.margin])
-      .separation((a, b) => {
-        // If we share a parent, keep padding tight
-        if (a.parent == b.parent) return 1;
-        // Otherwise, add padding so we don't overlap either node's children
-        let sep = 1;
-        if (a.children) sep += (a.children.length - 1) / 2;
-        if (b.children) sep += (b.children.length - 1) / 2;
-        return sep;
-      })
-
-  // Define nav box scales
-  _.navScaleY = d3.scaleLinear();
-  _.navScaleX = d3.scaleLinear();
-}
-
-/*** Google Sheets Call Back ***/
-LineageTree.prototype.parseGoogleSheet = function(data) {
-  let rawdata = data.values;
-
-  // Convert list of lists to list of objects, based on headers
-  let cleandata = [];
-  let header = rawdata.shift();
-  rawdata.forEach(function(row, index) {
-    cleanrow = row.reduce((map, r, i) => {
-      map[header[i]] = +r || r;
-      return map;
-    }, {id: index});
-    cleandata.push(cleanrow);
-  });
-
-  // Trigger data processing function
-  this.buildTree(cleandata);
-}
-
-/*** Build Tree from hierarchical data ***/
-LineageTree.prototype.buildTree = function(data) {
-  let _ = this;
   // Add Dummy Root, and link parentless nodes to it
   data.forEach(function(d) {
     if (data.filter(f => f.name == d.parent).length == 0) d.parent = "N/A";
@@ -159,6 +165,15 @@ LineageTree.prototype.buildTree = function(data) {
 
   // Tree function - Calculate node positions
   _.tree(_.root);
+
+  // Apply nudges
+  for (let i = 1; i < _.nodeList.length; i++) {
+    let n = _.nodeList[i];
+    if (n.data.nudge) {
+      console.log(n.x, n.data.nudge, n.x + n.data.nudge);
+      n.x += n.data.nudge;
+    }
+  }
 
   // Remove dummy nodes
   _.nodeList = _.nodeList.filter(n => !n.data.dummy);
@@ -221,28 +236,37 @@ LineageTree.prototype.insertParent = function(i) {
 LineageTree.prototype.elevateNode = function(i) {
   let n = this.nodeList[i];
   let p = n.parent;
+  let hint = n.data.hint || '  ';
+
   // Remove n as child of p
   p.children.splice(p.children.indexOf(n), 1);
   if (p.children.length == 0) p.children = null;
+
   // Add n as child of p's parent
   let ci = p.parent.children.indexOf(p);
   let cl = p.parent.children.length;
-  let ni = ci == 0 && cl > 1 ? 0 : cl;
+  // If n's parent is the first of several children, elevate to the left
+  // Otherwise, elevate to the right
+  let ni = ci == 0 && cl > 1 ? ci : ci + 1;
+  // If the hint is "L", go left regardless
+  ni = hint[0] == "L" ? ci : ni;
   p.parent.children.splice(ni, 0, n);
+
   // Update depth
   n.descendants().forEach(d => d.depth--);
   // Height doesn't seem to be used, so we won't update it
+
   // Set n's parent to p's parent
   n.parent = p.parent;
+
   // If p was an only child, add a spacer to keep p centered
   let grandparent = p.parent;
   while (true) {
     if (grandparent.dummy === undefined) break;
     grandparent = grandparent.parent;
   }
-  if (n.data.year == p.data.year && grandparent.children.length % 2 == 0) {
-    let spacer = {name: "", dummy: true, year: p.parent.data.year + 1};
-    spacer = new d3.node(spacer);
+  if (n.data.year == p.data.year && grandparent.children.length % 2 == 0 && hint[1] != "N") {
+    let spacer = new d3.node({name: "", dummy: true, year: p.parent.data.year + 1});
     spacer.parent = p.parent;
     spacer.depth = p.depth;
     p.parent.children.splice(0, 0, spacer);
